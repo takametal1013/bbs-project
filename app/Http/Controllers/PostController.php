@@ -10,12 +10,15 @@ use Illuminate\Support\Facades\DB;
 
 class PostController extends Controller
 {
-    public function showpost()
-{
-    $lists = Post::all();  // Postモデルを使用してすべての投稿を取得
 
-    return view('home', ['lists' => $lists]);  // 取得した投稿をビューに渡す
-}
+    public function showpost()
+    {
+        $lists = Post::all();  // Postモデルを使用してすべての投稿を取得
+
+        return view('home', ['lists' => $lists]);  // 取得した投稿をビューに渡す
+    }
+
+
     public function store(Request $request)
     {
         $post = new Post;
@@ -61,36 +64,78 @@ class PostController extends Controller
         return view('updateForm', ['post' => $post]);
     }
 
+
+
     //アップデート
-    public function update(Request $request)
-    {
-        $id = $request->input('id');
-        $up_post = $request->input('upPost');
-        DB::table('posts')
-        ->where('id', $id)
-        ->update(
-            ['contents' => $up_post]
-        );
-        return redirect('/home');
+   public function update(Request $request)
+ {
+    $id = $request->input('id');
+    $up_post = $request->input('upPost');
+
+    // 入力値が空白（スペースのみ）でないことを確認
+    if (trim($up_post) === '') {
+        // エラーメッセージを表示
+        return redirect()->back()->with('error', '投稿内容は空白にできません');
     }
 
+    // 入力値が100文字以下であることを確認
+    if (mb_strlen($up_post) > 100) {
+        // エラーメッセージを表示
+        return redirect()->back()->with('error', '投稿内容は100文字以下に収めてください');
+    }
+
+    DB::table('posts')
+    ->where('id', $id)
+    ->update(
+        ['contents' => $up_post]
+    );
+
+    return redirect('/home');
+ }
+
+
+
+
+
+
+
     public function delete($id)
-{
+ {
     DB::table('posts')->where('id', $id)->delete();
     return redirect('/home');
-}
+ }
 
 
-//検索
- public function search(Request $request)
-{
+    //検索
+    public function search(Request $request)
+    {
     $keyword = $request->input('keyword');
     if (!empty($keyword)) {
         $lists = Post::where('contents', 'LIKE', "%{$keyword}%")->get();
+
+        // 検索結果が0件の場合、エラーメッセージをセッションに保存
+        if ($lists->isEmpty()) {
+            session()->flash('error', '検索結果は0件です。');
+        }
     } else {
         $lists = Post::all();
+        // キーワードが空の場合、エラーメッセージをクリア
+        session()->forget('error');
     }
 
     return view('home', ['lists' => $lists]);
-}
+    }
+
+
+    //ログイン機能に関して追加
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
+
+
+
+
+
 }

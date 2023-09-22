@@ -48,12 +48,16 @@ h1 {
 {!! Form::hidden('id', $post->id) !!}
 
 {!! Form::input('text', 'upPost', $post->contents, ['required', 'class' => 'form-control']) !!}
-
+@if (session('error'))
+<div class="alert alert-danger">
+    {{ session('error') }}
+</div>
+@endif
 
 </div>
 
 <button type="submit" class="button">更新</button>
-
+<EMPTY>
 {!! Form::close() !!}
 </div>
 </body>

@@ -9,6 +9,8 @@ use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Redirect;
+
 
 
 class RegisterController extends Controller
@@ -51,13 +53,24 @@ class RegisterController extends Controller
      */
     protected function validator(array $data)
     {
-        return Validator::make($data, [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
-        ]);
+    $messages = [
+        'name.required' => '名前は必須です。',
+        'email.required' => 'メールアドレスは必須です。',
+        'email.email' => '有効なメールアドレスを入力してください。',
+        'email.unique' => 'このメールアドレスは既に登録されています。',
+        'password.required' => 'パスワードは必須です。',
+        'password.min' => 'パスワードは6文字以上である必要があります。',
+        'password.confirmed' => 'パスワードと確認用パスワードが一致しません。',
+    ];
+
+    return Validator::make($data, [
+        'name' => ['required', 'string', 'max:255'],
+        'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+        'password' => ['required', 'string', 'min:6', 'confirmed'],
+    ], $messages);
     }
-public function store(Request $request)
+
+    public function store(Request $request)
     {
         // バリデーションルールを定義
         $rules = [
@@ -66,7 +79,7 @@ public function store(Request $request)
             'password' => 'required|string|min:6|confirmed',
         ];
 
-$messages = [
+    $messages = [
             'name.required' => '名前は必須です。',
             'email.required' => 'メールアドレスは必須です。',
             'email.email' => '有効なメールアドレスを入力してください。',
@@ -92,5 +105,21 @@ $messages = [
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
         ]);
+          // ユーザーを作成した後、ログイン画面にリダイレクトします。
+    return redirect()->route('login');
     }
+
+    /**
+ * The user has been registered.
+ *
+ * @param  \Illuminate\Http\Request  $request
+ * @param  mixed  $user
+ * @return mixed
+ */
+protected function registered(Request $request, $user)
+{
+    $this->guard()->logout();
+
+    return redirect()->route('login');
+}
 }
